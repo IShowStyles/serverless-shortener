@@ -3,6 +3,7 @@ app: qwerty1
 service: aws-serveless
 frameworkVersion: "3"
 
+useDotenv: true
 
 package:
   patterns:
@@ -47,13 +48,12 @@ provider:
   runtime: nodejs14.x
   deploymentMethod: direct
   environment:
-    DYNAMODB_TABLE_USERS: users-table-1
-    DYNAMODB_TABLE_LINKS: links-table-1
-    DYNAMODB_TABLE_VISITS: visits-table-1
+    DYNAMODB_TABLE_USERS: users-table
+    DYNAMODB_TABLE_LINKS: links-table
     JWT_SECRET: your_jwt_secret_here123
     SQS_QUEUE: LinkDeactivationQueue
-  iamRoleStatements:
-
+    SES_LINK: http://localhost:3000
+    SERVICE_EMAIL: zholudev111@gmail.com
   iam:
     role:
       statements:
@@ -76,23 +76,20 @@ provider:
             - ses:SendEmail
           Resource:
             - "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.DYNAMODB_TABLE_USERS}"
-            - "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.DYNAMODB_TABLE_VISITS}"
             - "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.DYNAMODB_TABLE_LINKS}"
-  httpApi:
-    shouldStartNameWithService: true
-    authorizers:
-      authChecker:
-         enableSimpleResponses: true
-         type: request
-         functionName: authChecker
-         name: authChecker
-         resultTtlInSeconds: 0
-         identitySource:
-           - $request.header.Authorization
 
+  httpApi:
+    cors: true
+    authorizers:
+      customAuthorizer:
+        functionArn:
+          Fn::GetAtt: authChecker
+        identitySource: $request.header.Authorization
+        enableSimpleResponses: true
+        resultTtlInSeconds: 0
+        type: request
+        managedExternally: true
 functions:
-  customAuthorizer:
-    handler: dist/auth.customAuthorizer
   authChecker:
     handler: dist/auth.customAuthorizer
   signUp:
@@ -109,13 +106,14 @@ functions:
           method: post
   createLink:
     handler: dist/links.create
+    url:
+      cors: true
     events:
       - httpApi:
           path: /links
           method: post
-          type: REQUEST
           authorizerId:
-              Ref: ApiGatewayAuthorizer
+              Ref: customAuthorizer
   redirect:
     handler: dist/links.redirect
     events:
@@ -123,8 +121,6 @@ functions:
           path: /links/{id}
           method: get
           type: REQUEST
-          authorizerId:
-            Ref: ApiGatewayAuthorizer
   deactivateLink:
     handler: dist/links.deleted
     events:
@@ -132,8 +128,6 @@ functions:
           path: /links/{id}/deactivate
           method: put
           type: REQUEST
-          authorizerId:
-              Ref: ApiGatewayAuthorizer
   updatedLink:
     handler: dist/links.update
     events:
@@ -202,7 +196,7 @@ resources:
         Type: TOKEN
         IdentitySource: method.request.header.Authorization
         RestApiId: !Ref HttpApi
-        AuthorizerUri: arn:aws:apigateway:${self:provider.region}:lambda:path/2015-03-31/functions/authChecker/invocations
+        AuthorizerUri: arn:aws:apigateway:{self:provider.region}:lambda:path/2015-03-31/functions/authChecker/invocations
     UsersTable:
       Type: AWS::DynamoDB::Table
       Properties:

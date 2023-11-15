@@ -1,6 +1,6 @@
 import * as jwt from 'jsonwebtoken'
 import authService from './service/auth.service'
-import { Dynamo } from './common/db/aws'
+import {Dynamo} from './common/db/aws'
 
 export const signUp = async (event, context, callback) => {
     await authService.register(event, context, callback);
@@ -21,39 +21,27 @@ export const customAuthorizer = async (event, context, callback) => {
         const users = await Dynamo.get('email', decoded.email, 'users-table')
         if (!users) {
             context.fail('Unauthorized')
-            callback({
-                principalId: decoded.id,
-                policyDocument: generatePolicy(decoded.id, 'Unauthorized', event.methodArn)
+            callback(null, {
+                "isAuthorized": false,
+                "context": {
+                    "decoded": decoded
+                }
             })
         }
         if (users.access_token !== token) {
+            console.log('UNAuthorized')
             context.fail('Unauthorized')
-            callback({
-                principalId: decoded.id,
-                policyDocument: generatePolicy(decoded.id, 'Unauthorized', event.methodArn)
+            callback(null, {
+                "isAuthorized": false,
             })
         }
+        console.log(event.methodArn)
+        console.log(event)
+        console.log('Authorized')
         callback({
-            principalId: decoded.id,
-            policyDocument: generatePolicy(decoded.id, 'Allow', event.methodArn)
+            "isAuthorized": true,
         })
     } catch (error) {
         callback('Unauthorized ' + error.message)
     }
-}
-
-const generatePolicy = (principalId: string, effect: string, resource: string) => {
-    const authResponse: { principalId?: string, policyDocument?: any } = {}
-    authResponse.principalId = principalId
-    if (effect && resource) {
-        const policyDocument: { Version: string, Statement: any[] } = {Version: '2012-10-17', Statement: []}
-        const statementOne: { Action: string, Effect: string, Resource: string } = {
-            Action: 'execute-api:Invoke',
-            Effect: effect,
-            Resource: resource
-        }
-        policyDocument.Statement[0] = statementOne
-        authResponse.policyDocument = policyDocument
-    }
-    return authResponse
 }

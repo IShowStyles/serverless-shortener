@@ -7,8 +7,13 @@ const sqs = new AWS.SQS({
         accessKeyId: ACCESS_ID_TOKEN,
         secretAccessKey: SECRET_TOKEN
     },
-
 });
+AWS.config.update({
+    accessKeyId: ACCESS_ID_TOKEN,
+    secretAccessKey: SECRET_TOKEN,
+    region: 'us-west-1',
+});
+
 //{
 //     region: "us-west-1",
 //     credentials: ACCESS_ID_TOKEN,
@@ -16,15 +21,7 @@ const sqs = new AWS.SQS({
 // }
 
 
-const ses = new AWS.SES({
-    apiVersion: '2010-12-01',
-    region: 'us-west-1',
-    credentials: {
-        accessKeyId: ACCESS_ID_TOKEN,
-        secretAccessKey: SECRET_TOKEN
-    },
-    endpoint: 'http://localhost:4566/'
-});
+const ses = new AWS.SES();
 
 const documentClient = new AWS.DynamoDB.DocumentClient({
     region: "localhost",
