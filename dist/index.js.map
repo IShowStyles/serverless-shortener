@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../src/index.ts"],
+  "sourcesContent": ["export const hello = async (event, context, callback) => {\n    callback(null, {hee: \"hello\"});\n}\n"],
+  "mappings": "ymBAAA,IAAAA,EAAA,GAAAC,EAAAD,EAAA,WAAAE,IAAA,eAAAC,EAAAH,GAAO,IAAMI,EAAQ,CAAOC,EAAOC,EAASC,IAAaC,EAAA,wBACrDD,EAAS,KAAM,CAAC,IAAK,OAAO,CAAC,CACjC",
+  "names": ["src_exports", "__export", "hello", "__toCommonJS", "hello", "event", "context", "callback", "__async"]
+}

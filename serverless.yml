@@ -1,0 +1,243 @@
+org: ishowstyles
+app: qwerty1
+service: aws-serveless
+frameworkVersion: "3"
+
+
+package:
+  patterns:
+    - dist/**
+    - '!/src/**'
+    - '!.git/**'
+    - '!node_modules/**'
+    - '!package-lock.json'
+    - '!README.md'
+    - '!nodemon.json'
+    - '!yarn-lock.json'
+    - '!package.json'
+    - '!serverless.yml'
+    - '!tsconfig.json'
+    - '!esbuild.config.js'
+    - '!openapi.yml'
+  excludeDevDependencies: false
+
+
+plugins:
+  - serverless-multi-regional-plugin
+  - serverless-offline
+  - serverless-dynamodb
+
+custom:
+  defaultRegion: us-west-2
+  regions:
+    - us-west-2
+    - eu-central-1
+    - ap-southeast-1
+  serverless-offline:
+  serverless-dynamodb:
+     start:
+       docker: true
+       port: 8000
+       inMemory: true
+       migrate: true
+       convertEmptyValues: true
+provider:
+  name: aws
+  region: us-west-2
+  runtime: nodejs14.x
+  deploymentMethod: direct
+  environment:
+    DYNAMODB_TABLE_USERS: users-table-1
+    DYNAMODB_TABLE_LINKS: links-table-1
+    DYNAMODB_TABLE_VISITS: visits-table-1
+    JWT_SECRET: your_jwt_secret_here123
+    SQS_QUEUE: LinkDeactivationQueue
+  iamRoleStatements:
+
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "lambda:InvokeFunction"
+          Resource: "*"
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - sqs:SendMessage
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+            - sqs:GetQueueAttributes
+            - ses:SendEmail
+          Resource:
+            - "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.DYNAMODB_TABLE_USERS}"
+            - "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.DYNAMODB_TABLE_VISITS}"
+            - "arn:aws:dynamodb:${aws:region}:*:table/${self:provider.environment.DYNAMODB_TABLE_LINKS}"
+  httpApi:
+    shouldStartNameWithService: true
+    authorizers:
+      authChecker:
+         enableSimpleResponses: true
+         type: request
+         functionName: authChecker
+         name: authChecker
+         resultTtlInSeconds: 0
+         identitySource:
+           - $request.header.Authorization
+
+functions:
+  customAuthorizer:
+    handler: dist/auth.customAuthorizer
+  authChecker:
+    handler: dist/auth.customAuthorizer
+  signUp:
+    handler: dist/auth.signUp
+    events:
+      - httpApi:
+          path: /auth/signup
+          method: post
+  signIn:
+    handler: dist/auth.signIn
+    events:
+      - httpApi:
+          path: /auth/signin
+          method: post
+  createLink:
+    handler: dist/links.create
+    events:
+      - httpApi:
+          path: /links
+          method: post
+          type: REQUEST
+          authorizerId:
+              Ref: ApiGatewayAuthorizer
+  redirect:
+    handler: dist/links.redirect
+    events:
+      - httpApi:
+          path: /links/{id}
+          method: get
+          type: REQUEST
+          authorizerId:
+            Ref: ApiGatewayAuthorizer
+  deactivateLink:
+    handler: dist/links.deleted
+    events:
+      - httpApi:
+          path: /links/{id}/deactivate
+          method: put
+          type: REQUEST
+          authorizerId:
+              Ref: ApiGatewayAuthorizer
+  updatedLink:
+    handler: dist/links.update
+    events:
+      - httpApi:
+          path: /links/{id}
+          method: put
+          type: REQUEST
+          authorizerId:
+              Ref: ApiGatewayAuthorizer
+  processQueueMessages:
+    handler: dist/deactivated.processQueueMessages.handler
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - LinkDeactivationQueue
+              - Arn
+          batchSize: 10
+  deactivateLinks:
+    handler: dist/deactivated.deactivateExpired
+    events:
+      - schedule: rate(30 minutes)
+      - schedule: rate(1 day)
+      - schedule: rate(3 days)
+      - schedule: rate(7 days)
+  listLinks:
+    handler: dist/links.list
+    events:
+      - httpApi:
+          path: /users/links
+          method: get
+          type: REQUEST
+          authorizerId:
+              Ref: ApiGatewayAuthorizer
+  sendNotifications:
+    handler: dist/links.sendNotifications
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - LinkDeactivationQueue
+              - Arn
+
+resources:
+  Resources:
+    HttpApi:
+      Type: AWS::ApiGatewayV2::Api
+      Properties:
+        Name: Serverless-API
+        ProtocolType: HTTP
+        Description: My Serverless API
+        CorsConfiguration:
+          AllowMethods:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+          AllowOrigins:
+            - '*'
+          MaxAge: 3600
+    ApiGatewayAuthorizer:
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        Name: customAuthorizer
+        Type: TOKEN
+        IdentitySource: method.request.header.Authorization
+        RestApiId: !Ref HttpApi
+        AuthorizerUri: arn:aws:apigateway:${self:provider.region}:lambda:path/2015-03-31/functions/authChecker/invocations
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.DYNAMODB_TABLE_USERS}
+        AttributeDefinitions:
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: email
+            KeyType: HASH
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+    LinksTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.DYNAMODB_TABLE_LINKS}
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+          - AttributeName: id
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+    LinkDeactivationQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:provider.environment.SQS_QUEUE}
+        VisibilityTimeout: 60
+        MessageRetentionPeriod: 86400

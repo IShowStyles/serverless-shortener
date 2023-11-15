@@ -1,0 +1,6 @@
+{
+  "watch": ["src"],
+  "ext": "ts",
+  "ignore": ["node_modules"],
+  "exec": "node esbuild.config.js && sls offline start"
+}

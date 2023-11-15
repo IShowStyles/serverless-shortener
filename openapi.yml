@@ -1,0 +1,325 @@
+openapi: 3.0.0
+info:
+  title: User Registration API
+  version: 1.0.0
+
+x-background-tasks:
+  - name: deactivateLinks
+    schedule:
+      - rate(30 minutes)
+      - rate(1 day)
+      - rate(3 days)
+      - rate(7 days)
+    description: >
+      The `deactivateLinks` task deactivates links that have expired based on predefined intervals.
+      This task runs automatically and is not accessible as an API endpoint.
+  - name: processQueueMessages
+    description: >
+    The `processQueueMessages` task processes messages from a queue and sends email notifications.
+    It reads messages from the queue, each representing a link deactivation event, and sends an email to the user associated with the deactivated link. This task is triggered automatically as messages arrive in the queue and is not accessible as an API endpoint.
+paths:
+  /auth/signup:
+    post:
+      summary: Register a new user
+      description: This endpoint registers a new user with an email and password.
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: User's email address.
+                password:
+                  type: string
+                  format: password
+                  description: User's password.
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: User registered successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    type: object
+        '400':
+          description: Invalid input data or user already exists.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /login:
+    post:
+      summary: Login a user
+      description: This endpoint authenticates a user by email and password.
+      tags:
+        - User
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: User's email address.
+                password:
+                  type: string
+                  format: password
+                  description: User's password.
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: User logged in successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    type: object
+        '400':
+          description: Invalid credentials or other error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  '/link/{id}':
+    delete:
+      summary: Delete a link
+      description: This endpoint deletes a link identified by its ID.
+      security:
+        - bearerAuth: []
+      tags:
+        - Link
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The unique identifier of the link.
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+          description: Bearer token for authentication.
+      responses:
+        '204':
+          description: Link deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized - Token not valid or user does not have permission.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Link not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  '/link/{id}':
+    put:
+      summary: Update a link
+      description: This endpoint updates a specific link's details.
+      security:
+        - bearerAuth: []
+      tags:
+        - Link
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The unique identifier of the link to be updated.
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+          description: Bearer token for authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                originalLink:
+                  type: string
+                  description: The new URL to which the link should redirect.
+                lifetime:
+                  type: string
+                  description: The lifetime of the link (e.g., '30m', '1d', '3d', '7d', or 'one-time').
+              required:
+                - originalLink
+                - lifetime
+      responses:
+        '200':
+          description: Link updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    type: object
+        '400':
+          description: Invalid data or user not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized - Token not valid or missing.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /link:
+    post:
+      summary: Create a new link
+      description: This endpoint creates a new link. Access is restricted to authorized users only.
+      tags:
+        - Link
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                originalLink:
+                  type: string
+                  description: The URL to which the link should redirect.
+                lifetime:
+                  type: string
+                  description: The lifetime of the link (e.g., '1h', '1d', '3d', '7d', or 'one-time').
+              required:
+                - originalLink
+                - lifetime
+      responses:
+        '200':
+          description: Link created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    type: object
+        '400':
+          description: Invalid data or user not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized - Token not valid or missing.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  '/link/{id}/redirect':
+    get:
+      summary: Redirect to a specific link
+      description: This endpoint redirects to the URL specified in the link identified by the given ID. The link is deactivated if it's a one-time link or expired.
+      security:
+        - bearerAuth: []
+      tags:
+        - Link
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The unique identifier of the link for redirection.
+      responses:
+        '301':
+          description: Redirect to the original link.
+          headers:
+            Location:
+              schema:
+                type: string
+              description: The URL to redirect to.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Redirecting to [Original Link URL].
+        '404':
+          description: Link deactivated or not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

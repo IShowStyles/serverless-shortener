@@ -1,0 +1,38 @@
+{
+  "name": "ts-apiv2",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "node esbuild.config.js2",
+    "dev": "serverless offline start --stage dev",
+    "start:db": "sls dynamodb start --migrate",
+    "watch": "tsc -w",
+    "lint": "tslint '*.ts'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/aws-sdk": "0.0.42",
+    "@types/node": "^7.0.5",
+    "esbuild": "^0.19.5",
+    "serverless-multi-region-plugin": "^1.3.3",
+    "serverless-multi-regional-plugin": "^1.0.7",
+    "tslint": "^5.5.0",
+    "tslint-config-standard": "^6.0.1",
+    "typescript": "^2.4.2"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.445.0",
+    "@aws-sdk/client-ses": "^3.445.0",
+    "@aws-sdk/client-sqs": "^3.446.0",
+    "@aws-sdk/lib-dynamodb": "^3.445.0",
+    "aws-sdk": "^2.1490.0",
+    "dotenv": "^16.3.1",
+    "nodemon": "^3.0.1",
+    "serverless-dynamodb": "^0.2.47",
+    "serverless-offline": "^13.2.1",
+    "uuid": "^9.0.1"
+  }
+}

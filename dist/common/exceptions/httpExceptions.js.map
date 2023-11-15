@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../src/common/exceptions/httpExceptions.ts"],
+  "sourcesContent": ["class HttpException extends Error {\n  name: string;\n  statusCode: number;\n  validationErrors?: any;\n\n  constructor(name: string, statusCode: number, description: string, validationErrors?: any) {\n    super(description);\n    this.name = name;\n    this.statusCode = statusCode;\n    this.validationErrors = validationErrors;\n  }\n}\n\nenum HttpStatusCode {\n  OK = 200,\n  CREATED = 201,\n  ACCEPTED = 202,\n  NO_CONTENT = 204,\n  BAD_REQUEST = 400,\n  NOT_FOUND = 404,\n  FORBIDDEN = 403,\n  UNAUTHORIZED = 401,\n  METHOD_NOT_ALLOWED = 405,\n  REQUEST_TIMEOUT = 408,\n  CONFLICT = 409,\n  INTERNAL_SERVER = 500,\n}\n\nexport { HttpException, HttpStatusCode }"],
+  "mappings": "wiBAAA,IAAAA,EAAA,GAAAC,EAAAD,EAAA,mBAAAE,EAAA,mBAAAC,IAAA,eAAAC,EAAAJ,GAAA,IAAMK,EAAN,cAA4B,KAAM,CAKhC,YAAYC,EAAcC,EAAoBC,EAAqBC,EAAwB,CACzF,MAAMD,CAAW,EALnBE,EAAA,aACAA,EAAA,mBACAA,EAAA,yBAIE,KAAK,KAAOJ,EACZ,KAAK,WAAaC,EAClB,KAAK,iBAAmBE,CAC1B,CACF,EAEKE,OACHA,IAAA,GAAK,KAAL,KACAA,IAAA,QAAU,KAAV,UACAA,IAAA,SAAW,KAAX,WACAA,IAAA,WAAa,KAAb,aACAA,IAAA,YAAc,KAAd,cACAA,IAAA,UAAY,KAAZ,YACAA,IAAA,UAAY,KAAZ,YACAA,IAAA,aAAe,KAAf,eACAA,IAAA,mBAAqB,KAArB,qBACAA,IAAA,gBAAkB,KAAlB,kBACAA,IAAA,SAAW,KAAX,WACAA,IAAA,gBAAkB,KAAlB,kBAZGA,OAAA",
+  "names": ["httpExceptions_exports", "__export", "HttpException", "HttpStatusCode", "__toCommonJS", "HttpException", "name", "statusCode", "description", "validationErrors", "__publicField", "HttpStatusCode"]
+}
