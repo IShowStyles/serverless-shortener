@@ -122,8 +122,6 @@ export const update = async (event, context, callback) => {
 }
 
 export const create = async (event, context, callback) => {
-    console.log(event)
-    console.log(context)
     await LinkService.create(event, context, callback)
 }
 

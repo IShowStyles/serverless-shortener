@@ -2,6 +2,6 @@
   "version": 3,
   "sources": ["../../../../src/common/utils/shortlink/index.ts"],
   "sourcesContent": ["function generateId(length) {\n    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';\n    let result = '';\n    for (let i = 0; i < length; i++) {\n        result += characters.charAt(Math.floor(Math.random() * characters.length));\n    }\n    return result;\n}\n\nexport {\n    generateId\n}\n"],
-  "mappings": "4ZAAA,IAAAA,EAAA,GAAAC,EAAAD,EAAA,gBAAAE,IAAA,eAAAC,EAAAH,GAAA,SAASE,EAAWE,EAAQ,CACxB,IAAMC,EAAa,iEACfC,EAAS,GACb,QAASC,EAAI,EAAGA,EAAIH,EAAQG,IACxBD,GAAUD,EAAW,OAAO,KAAK,MAAM,KAAK,OAAO,EAAIA,EAAW,MAAM,CAAC,EAE7E,OAAOC,CACX",
+  "mappings": "yaAAA,IAAAA,EAAA,GAAAC,EAAAD,EAAA,gBAAAE,IAAA,eAAAC,EAAAH,GAAA,SAASE,EAAWE,EAAQ,CACxB,IAAMC,EAAa,iEACfC,EAAS,GACb,QAASC,EAAI,EAAGA,EAAIH,EAAQG,IACxBD,GAAUD,EAAW,OAAO,KAAK,MAAM,KAAK,OAAO,EAAIA,EAAW,MAAM,CAAC,EAE7E,OAAOC,CACX",
   "names": ["shortlink_exports", "__export", "generateId", "__toCommonJS", "length", "characters", "result", "i"]
 }

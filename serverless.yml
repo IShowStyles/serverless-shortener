@@ -82,8 +82,7 @@ provider:
     cors: true
     authorizers:
       customAuthorizer:
-        functionArn:
-          Fn::GetAtt: authChecker
+        functionName: authChecker
         identitySource: $request.header.Authorization
         enableSimpleResponses: true
         resultTtlInSeconds: 0
@@ -135,8 +134,6 @@ functions:
           path: /links/{id}
           method: put
           type: REQUEST
-          authorizerId:
-              Ref: ApiGatewayAuthorizer
   processQueueMessages:
     handler: dist/deactivated.processQueueMessages.handler
     events:
@@ -173,30 +170,6 @@ functions:
 
 resources:
   Resources:
-    HttpApi:
-      Type: AWS::ApiGatewayV2::Api
-      Properties:
-        Name: Serverless-API
-        ProtocolType: HTTP
-        Description: My Serverless API
-        CorsConfiguration:
-          AllowMethods:
-            - GET
-            - POST
-            - PUT
-            - PATCH
-            - DELETE
-          AllowOrigins:
-            - '*'
-          MaxAge: 3600
-    ApiGatewayAuthorizer:
-      Type: AWS::ApiGateway::Authorizer
-      Properties:
-        Name: customAuthorizer
-        Type: TOKEN
-        IdentitySource: method.request.header.Authorization
-        RestApiId: !Ref HttpApi
-        AuthorizerUri: arn:aws:apigateway:{self:provider.region}:lambda:path/2015-03-31/functions/authChecker/invocations
     UsersTable:
       Type: AWS::DynamoDB::Table
       Properties:
